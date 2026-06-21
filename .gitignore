@@ -1,0 +1,5 @@
+dqn_assault.weights.h5
+dqn_assault_best.weights.h5
+training_history_assault.csv
+__pycache__
+.vscode
