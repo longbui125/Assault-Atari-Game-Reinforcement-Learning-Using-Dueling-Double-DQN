@@ -5,6 +5,7 @@ from agent import save_model
 
 
 def reset_history(history_path):
+    # Start a new CSV history file with a fixed header.
     with open(history_path, "w", newline="") as history_file:
         writer = csv.writer(history_file)
         writer.writerow(
@@ -33,6 +34,7 @@ def log_episode(
     replay_size,
     evaluation=None,
 ):
+    # Append one training episode to the CSV history.
     with open(history_path, "a", newline="") as history_file:
         writer = csv.writer(history_file)
         writer.writerow(
@@ -51,10 +53,12 @@ def log_episode(
 
 
 def create_checkpoint_state():
+    # Keep the best evaluation score in memory during training.
     return {"best_score": float("-inf")}
 
 
 def save_evaluation_checkpoints(agent, evaluation, state, latest_path, best_path):
+    # Always save the latest weights and update the best checkpoint when needed.
     save_model(agent, latest_path)
     conservative_score = evaluation["mean_reward"] - (
         evaluation["std_reward"] / math.sqrt(len(evaluation["rewards"]))

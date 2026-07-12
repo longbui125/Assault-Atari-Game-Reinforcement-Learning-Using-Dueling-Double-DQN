@@ -7,6 +7,7 @@ from env_wrapper import ASSAULT_ACTIONS, make_env
 
 
 def get_action_meanings(env):
+    # Use the environment's action names when they are available.
     meanings = env.unwrapped.get_action_meanings()
     if len(meanings) == env.action_space.n:
         return meanings
@@ -20,6 +21,7 @@ def evaluate_policy(
     render_mode=None,
     collect_diagnostics=False,
 ):
+    # Run full evaluation episodes without exploration.
     env = make_env(render_mode=render_mode)
     action_meanings = get_action_meanings(env)
     rewards = []
@@ -36,6 +38,7 @@ def evaluate_policy(
             recent_actions = deque(maxlen=3)
 
             while not done:
+                # Track action usage only when diagnostics are requested.
                 action = select_action(agent, state, exploration=False)
                 next_state, reward, terminated, truncated, _ = env.step(action)
                 done = terminated or truncated

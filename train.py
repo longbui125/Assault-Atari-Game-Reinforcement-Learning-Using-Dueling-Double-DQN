@@ -13,10 +13,11 @@ from callbacks import (
 )
 from env_wrapper import make_env
 from evaluation import evaluate_policy
-from replay_buffer import add_experience, create_replay_buffer, sample_batch, update_priorities
+from replay_buffer import add_experience, create_replay_buffer, sample_batch
 
 
 def train():
+    # Fix every source of randomness so runs are reproducible.
     random.seed(config.SEED)
     np.random.seed(config.SEED)
     tf.keras.utils.set_random_seed(config.SEED)
@@ -24,16 +25,13 @@ def train():
     env = make_env(render_mode=None)
     env.action_space.seed(config.SEED)
     agent = create_agent(int(env.action_space.n))
-    replay = create_replay_buffer(
-        capacity=config.REPLAY_CAPACITY,
-        alpha=config.PRIORITY_ALPHA,
-        max_priority=config.MAX_PRIORITY,
-    )
+    replay = create_replay_buffer(capacity=config.REPLAY_CAPACITY)
     checkpoint_state = create_checkpoint_state()
     reset_history(config.HISTORY_PATH)
 
     environment_steps = 0
     training_steps = 0
+    # Start from scratch and overwrite any old history or checkpoints.
     print("STARTING FRESH TRAINING RUN")
 
     try:
@@ -44,6 +42,7 @@ def train():
             done = False
 
             while not done:
+                # Use random actions during warmup, then switch to epsilon-greedy actions.
                 if replay["size"] < config.WARMUP_STEPS:
                     action = env.action_space.sample()
                 else:
@@ -59,16 +58,10 @@ def train():
                 environment_steps += 1
                 update_epsilon(agent, environment_steps)
 
+                # Train only after the replay buffer has enough transitions.
                 if replay["size"] >= config.WARMUP_STEPS:
-                    beta_progress = min(
-                        1.0, training_steps / config.PRIORITY_BETA_STEPS
-                    )
-                    beta = config.PRIORITY_BETA_START + beta_progress * (
-                        1.0 - config.PRIORITY_BETA_START
-                    )
-                    batch = sample_batch(replay, config.BATCH_SIZE, beta)
-                    loss, td_errors = train_step(agent, batch)
-                    update_priorities(replay, batch["indices"], td_errors)
+                    batch = sample_batch(replay, config.BATCH_SIZE)
+                    loss = train_step(agent, batch)
                     losses.append(loss)
                     training_steps += 1
 
@@ -76,6 +69,7 @@ def train():
                         update_target_network(agent)
 
             evaluation = None
+            # Run evaluation on a fixed seed schedule.
             if (
                 episode % config.EVALUATION_INTERVAL == 0
                 or episode == config.EPISODES
@@ -98,6 +92,7 @@ def train():
                 )
 
             mean_loss = float(np.mean(losses)) if losses else 0.0
+            # Write one row per episode to the training history.
             log_episode(
                 config.HISTORY_PATH,
                 episode,

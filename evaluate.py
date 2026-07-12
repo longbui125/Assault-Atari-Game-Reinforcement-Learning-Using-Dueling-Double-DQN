@@ -10,6 +10,7 @@ from evaluation import evaluate_policy
 
 
 def plot_history(history_path=config.HISTORY_PATH):
+    # Load the training CSV and draw reward and epsilon curves.
     if not os.path.exists(history_path):
         print(f"NO HISTORY FILE FOUND: {history_path}")
         return
@@ -85,6 +86,7 @@ def plot_history(history_path=config.HISTORY_PATH):
 
 
 def get_num_actions():
+    # Read the action space size from a live environment.
     env = make_env(render_mode=None)
     try:
         return int(env.action_space.n)
@@ -98,6 +100,7 @@ def evaluate_agent(
     render_mode=None,
     seed=config.SEED + 10_000,
 ):
+    # Load the best checkpoint and print a fixed evaluation summary.
     agent = create_agent(get_num_actions())
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"MODEL NOT FOUND: {model_path}")
@@ -123,6 +126,7 @@ def evaluate_agent(
 
 
 def watch_agent(model_path=config.BEST_MODEL_PATH, num_episodes=1):
+    # Open the environment in human mode and run one evaluation episode.
     return evaluate_agent(model_path, num_episodes, render_mode="human")
 
 

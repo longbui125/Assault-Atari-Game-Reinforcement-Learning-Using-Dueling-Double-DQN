@@ -14,25 +14,29 @@ ASSAULT_ACTIONS = {
     6: "LEFTFIRE",
 }
 
-def make_env(env_id = ENV_ID, render_mode = None):
-    env = gym.make(env_id, render_mode = render_mode, frameskip = 1)
+
+def make_env(env_id=ENV_ID, render_mode=None):
+    # Build the Assault environment with Atari preprocessing and frame stacking.
+    env = gym.make(env_id, render_mode=render_mode, frameskip=1)
 
     env = AtariPreprocessing(
         env,
-        noop_max = 20,
-        frame_skip = 4,
-        screen_size = 84,
-        terminal_on_life_loss = False,
-        grayscale_obs = True,
-        grayscale_newaxis = False,
-        scale_obs = False,
-       )
-    
-    env = FrameStackObservation(env, stack_size = 4)
+        noop_max=20,
+        frame_skip=4,
+        screen_size=84,
+        terminal_on_life_loss=False,
+        grayscale_obs=True,
+        grayscale_newaxis=False,
+        scale_obs=False,
+    )
+
+    env = FrameStackObservation(env, stack_size=4)
 
     return env
 
+
 if __name__ == "__main__":
+    # Print the wrapped observation and action space for a quick sanity check.
     test_env = make_env()
     obs, info = test_env.reset()
 
